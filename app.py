@@ -8,8 +8,6 @@ import config
 import queries as q
 
 
-
-
 def create_connection(path):
     connection = None
     try:

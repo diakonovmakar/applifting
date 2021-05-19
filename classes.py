@@ -1,39 +1,35 @@
+#external libraries
 from config import take_token
 from flask import Flask, request, jsonify
 from flask_restful import Resource, Api
 import requests as rq
-
+#libraries
 from sqlalchemy import create_engine
 import json
 from json import dumps
-
+#files
 import config
 
 db_connect = create_engine('sqlite:///tables.sqlite')
 app = Flask(__name__)
 
-"""
-сделай отдельный класс,
-который будет работать только с базой данных.
-Там должны быть методы для создания, чтения и обновления товаров.
-Назови его ProductRepository. Соединение с базой данных
-не создавай внутри класса, а передавай его в конструктор.
-"""
+#, id='', name='', description='' 
+#self.id = id
+#self.name = name
+#self.desc = description
 
 class ProductRepository:
-    def __init__(self, id='', name='', description=''):
+    def __init__(self):
         self.conn = db_connect.connect() # connect to database
-        self.id = id
-        self.name = name
-        self.desc = description
+        
 
-    def create_product(self):
+    def create_product(self, name, desc):
         query = self.conn.execute(f"""
                                     INSERT INTO
                                     products (name, description)
                                     VALUES
-                                    ('{self.name}', '{self.desc}');
-                                    """)
+                                    (?, ?);
+                                    """, (f'{name}', f'{desc}'))
         return query
 
     def read_product(self):
@@ -80,11 +76,6 @@ class OffersServiceClient:
         self.id = id
         self.name = name
         self.desc = description
-        self.url = 'https://applifting-python-excercise-ms.herokuapp.com/api/v1/'
-        self.url_params =   {'auth': 'auth/',
-                            'products': 'products/',
-                            'register': 'register/',
-                            'offers': 'offers/'}
         self.token = take_token(self.url)
 
     def take_token(self):
@@ -109,7 +100,5 @@ class OffersServiceClient:
         response = rq.get(url, headers=headers)
         return json.loads(response.text)
 
-token = OffersServiceClient()
-dosquran = OffersServiceClient('1', 'Dosquran', 'TLDR')
-print(dosquran.product_register())
-print(dosquran.products_offer())
+dosquana = ProductRepository()
+dosquana.create_product('Dosquana', 'TLDR')
