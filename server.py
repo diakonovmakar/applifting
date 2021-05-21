@@ -1,54 +1,65 @@
-from flask import Flask, jsonify, abort, request, make_response
-from sqlalchemy import create_engine
-from json import dumps
+from flask import Flask, request, jsonify, make_response, abort
+import sqlite3
+from classes import ProductRepository, OffersServiceClient
 
-app = Flask(__name__)
-data = [
-    {
-        'id': 1,
-        'name': 'Dosquarna',
-        'description': 'The best gas station'
-    },
-    {
-        'id': 2,
-        'title': 'Lukoil',
-        'description': 'The biggest gas company in Russia'
-    }
-]
+app = Flask(__name__, static_url_path='')
 
-@app.route('/products', methods=['GET'])
+offers_service = OffersServiceClient()
+
+def create_repository():
+    db_connect = sqlite3.connect('tables.sqlite')
+    return ProductRepository(db_connect)
+
+@app.route('/products/', methods=['GET'])
 def get_products():
-    return jsonify({'products': data})
+    return create_repository().read_all_products()
 
-@app.route('/products/<int:product_id>', methods=['GET'])
+@app.route('/products/<int:product_id>/', methods=['GET'])
 def get_product(product_id):
-    if product_id == 1:
-        return 'qwerty'
-    abort(404)
-
-@app.route('/products', methods=['POST'])
+    return create_repository().read_product(product_id)
+    
+@app.route('/products/', methods=['POST'])
 def create_product():
-    if not request.json or not 'name' in request.json:
-        abort(400)
-    product = {
-        'id': data[-1]['id'] + 1,
-        'name': request.json['name'],
-        'description': request.json.get('description', "")
-    }
-    data.append(product)
-    return jsonify({'product': product}), 201
+    id = request.json['id']
+    name = request.json['name']
+    description = request.json['description']    
+    create_repository().create_product(id, name, description) 
+    offers_service.product_register(id, name, description)   
+    #offers = offers_service.products_offer(id)
+    #for i in offers:
+    #    create_repository().create_offer(i)
+    return jsonify({'status':'created', 'status':'registered'})
 
-@app.route('/products/<int:product_id>', methods=['PUT'])
+@app.route('/products/<int:product_id>/', methods=['PUT'])
 def update_product(product_id):
-    if product_id == 1:
-        return jsonify(product_id)
-    abort(404)
+    id = product_id
+    name = request.json['name']
+    description = request.json['description']
+    if name != '' and description != '':
+        create_repository().update_product_name(name, id)
+        create_repository().update_product_description(description, id)
+        return jsonify({'name':'updated', 'description':'updated'})
+    if name != '':
+        create_repository().update_product_name(name, id)
+        return jsonify({'name':'updated'})
+    if description != '':
+        create_repository().update_product_description(description, id)
+        return jsonify({'description':'updated'})
 
-@app.route('/products/<int:product_id>', methods=['DELETE'])
+@app.route('/products/<int:product_id>/', methods=['DELETE'])
 def delete_product(product_id):
-    if product_id == 1:
-        return make_response(jsonify({'result': True}), 204)
-    abort(404)
+    create_repository().delete_product(product_id)
+    return jsonify({'status':'deleted'})
+
+@app.route('/offers/', methods=['GET'])
+def get_offers():
+    return create_repository().read_all_offers()
+
+@app.route('/products/<int:offer_id>/', methods=['GET'])
+def get_offer(offer_id):
+    return create_repository().read_offer(offer_id)
 
 if __name__ == '__main__':
-    app.run(debug=False)
+     app.run()
+
+

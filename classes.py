@@ -1,83 +1,124 @@
 #external libraries
-from sqlalchemy import create_engine
+from flask.json import jsonify
 import requests as rq
 #libraries
 import json
-from json import dumps
 #files
 import config
-from config import take_token
 
-db_connect = create_engine('sqlite:///tables.sqlite')
-#app = Flask(__name__)
-
-#, id='', name='', description='' 
-#self.id = id
-#self.name = name
-#self.desc = description
-
-#self.id = id
-#self.name = name
-#self.desc = description
 
 class ProductRepository:
-    def __init__(self):
-        self.conn = db_connect.connect() # connect to database
-        
+    def __init__(self, connection):
+        self.conn = connection # connect to database        
 
-    def create_product(self, name, desc):
-        self.conn.execute(f"""
+    def create_product(self, id, name, desc):
+        self.conn.execute("""
                         INSERT INTO
-                        products (name, description)
+                        products (id, name, description)
                         VALUES
-                        (?, ?);
-                        """, (name, desc))
+                        (:id, :name, :desc);
+                        """, {'id': id, 'name': name, 'desc': desc})
+        self.conn.commit()
+        self.conn.close()
+        print('OK')                     
         
     def read_product(self, id):
-        self.conn.execute(f"""
+        cursor = self.conn.cursor()
+        cursor.execute("""
                         SELECT *
                         FROM products
-                        WHERE id=?;
-                        """, (id))
-        
+                        WHERE id=:id;
+                        """, {'id':id})
+        return jsonify(cursor.fetchall())
+
+    def read_all_products(self):
+        cursor = self.conn.cursor()
+        cursor.execute("""
+                        SELECT *
+                        FROM products;
+                        """)
+        return jsonify(cursor.fetchall())
+
     def update_product_name(self, name, id):
-        self.conn.execute(f"""
+        self.conn.execute("""
                         UPDATE products
-                        SET name=(?)
-                        WHERE id=(?);
-                        """, (name, id))
+                        SET name=:name
+                        WHERE id=:id;
+                        """, {'name': name, 'id': id})
+        self.conn.commit()
+        self.conn.close()
 
     def update_product_description(self, desc, id):
-        self.conn.execute(f"""
+        self.conn.execute("""
                         UPDATE products
-                        SET description=?
-                        WHERE id=?;
-                        """, (desc, id))
+                        SET description=:desc
+                        WHERE id=:id;
+                        """, {'desc': desc, 'id': id})
+        self.conn.commit()
+        self.conn.close()
         
     def delete_product(self, id):
-        self.conn.execute(f"""
+        self.conn.execute("""
                         DELETE FROM products
-                        WHERE id=?;
-                        """, (id))
+                        WHERE id=:id;
+                        """, {'id': id})
+        self.conn.commit()
+        self.conn.close()
         
-    def read_offers(self, id):
-        self.conn.execute(f"""
+    def create_offer(self, id, price, items_in_stock):
+        self.conn.execute("""
+                        INSERT INTO
+                        offers(id, price, items_in_stock)
+                        VALUES
+                        (:id, :price, :items_in_stock);
+                        """, {'id': id, 'price': price, 'items_in_stock': items_in_stock})
+        self.conn.commit()
+        self.conn.close()
+        print(f'Offer with id #{id} was created!')
+
+    def read_all_offers(self):
+        cursor = self.conn.cursor()
+        cursor.execute("""
+                        SELECT *
+                        FROM offers;
+                        """)
+        return jsonify(cursor.fetchall())
+
+    def read_offer(self, id):
+        cursor = self.conn.cursor()
+        cursor.execute("""
                         SELECT *
                         FROM offers
-                        WHERE id=?;
-                        """, (id))
-        
+                        WHERE id=:id;
+                        """, {'id': id})
+        return jsonify(cursor.fetchall())
+
+    def update_offer(self, dict_of_data):
+        self.conn.execute("""
+                        UPDATE offers
+                        SET price=:price, items_in_stock=:items_in_stock
+                        WHERE id=:id;
+                        """, dict_of_data)
+        self.conn.commit()
+        self.conn.close()
+        print(f'Offer with id #{id} was updated')
+    
+    def delete_offer(self, id):
+        self.conn.execute("""
+                        DELETE FROM offers
+                        WHERE id=:id;
+                        """, {'id': id})
+        self.conn.commit()
+        self.conn.close()
+        print(f'Offer with id #{id} was deleted')
+
+
 class OffersServiceClient:
     def __init__(self):   
-        self.token = take_token(config.url)
-
-    def take_token(self):
-        response = rq.post(f'{config.url}{config.url_params["auth"]}')
-        token = json.loads(response.text)
-        return token
+        self.token = config.token
 
     def product_register(self, id, name, desc):
-        headers = {'Bearer': f'{self.token["access_token"]}'}
+        headers = {'Bearer': self.token}
         data = {'id': f'{id}',
                 'name': f'{name}',
                 'description': f'{desc}'}
@@ -88,17 +129,11 @@ class OffersServiceClient:
         return json.loads(response.text)
 
     def products_offer(self, id):
-        headers = {'Bearer': f'{self.token["access_token"]}'}
+        headers = {'Bearer': self.token}
         url = f'{config.url}{config.url_params["products"]}{id}/{config.url_params["offers"]}'
         response = rq.get(url, headers=headers)
         return json.loads(response.text)
 
-dosquana = ProductRepository()
 
-dosquana.delete_product(1)
-#dosquana.create_product('Dosquana', 'TLDR')
-#dosquana.update_product_name('NeDosquana', 1)
-#dosquana.update_product_description('---', 1)
-
-
-
+offers_service = OffersServiceClient()
+print(offers_service.product_register(1, '1234', 'qwerty'))
