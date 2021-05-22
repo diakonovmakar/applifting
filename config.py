@@ -1,3 +1,4 @@
+from flask.json import jsonify
 import requests as rq
 import json
 
@@ -7,6 +8,8 @@ url_params = {'auth': 'auth/',
               'products': 'products/',
               'register': 'register/',
               'offers': 'offers/'}
+
+
 
 '''
 def take_token(url):

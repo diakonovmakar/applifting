@@ -6,7 +6,6 @@ import json
 #files
 import config
 
-
 class ProductRepository:
     def __init__(self, connection):
         self.conn = connection # connect to database        
@@ -19,8 +18,7 @@ class ProductRepository:
                         (:id, :name, :desc);
                         """, {'id': id, 'name': name, 'desc': desc})
         self.conn.commit()
-        self.conn.close()
-        print('OK')                     
+        print(f'Product with id #{id} was created!')                    
         
     def read_product(self, id):
         cursor = self.conn.cursor()
@@ -37,7 +35,26 @@ class ProductRepository:
                         SELECT *
                         FROM products;
                         """)
-        return jsonify(cursor.fetchall())
+        data = cursor.fetchall()
+        result= []
+        for i in data:
+            dict_of_result = {'id':'',
+                            'name': '',
+                            'description': ''}
+            dict_of_result['id'] = i[0]
+            dict_of_result['name'] = i[1]
+            dict_of_result['description'] = i[2]
+            result.append(dict_of_result)
+        return jsonify(result)
+
+    def update_product(self, name, desc, id):
+            self.conn.execute("""
+                            UPDATE products
+                            SET name=:name, description=:desc
+                            WHERE id=:id;
+                            """, {'name': name, 'desc': desc, 'id': id})
+            self.conn.commit()
+            print(f'Product with id #{id} was updated!') 
 
     def update_product_name(self, name, id):
         self.conn.execute("""
@@ -46,7 +63,7 @@ class ProductRepository:
                         WHERE id=:id;
                         """, {'name': name, 'id': id})
         self.conn.commit()
-        self.conn.close()
+        print(f'Name of product with id #{id} was updated!') 
 
     def update_product_description(self, desc, id):
         self.conn.execute("""
@@ -55,7 +72,7 @@ class ProductRepository:
                         WHERE id=:id;
                         """, {'desc': desc, 'id': id})
         self.conn.commit()
-        self.conn.close()
+        print(f'Description of product with id #{id} was updated!') 
         
     def delete_product(self, id):
         self.conn.execute("""
@@ -63,17 +80,21 @@ class ProductRepository:
                         WHERE id=:id;
                         """, {'id': id})
         self.conn.commit()
-        self.conn.close()
+        print(f'Product with id #{id} was deleted!') 
         
-    def create_offer(self, id, price, items_in_stock):
+    def create_offer(self, product_id, dict_of_data):
+        data = {'product_id': product_id,
+                'id': dict_of_data['id'],
+                'price': dict_of_data['price'],
+                'items_in_stock': dict_of_data['items_in_stock']}
         self.conn.execute("""
                         INSERT INTO
-                        offers(id, price, items_in_stock)
+                        offers(product_id, id, price, items_in_stock)
                         VALUES
-                        (:id, :price, :items_in_stock);
-                        """, {'id': id, 'price': price, 'items_in_stock': items_in_stock})
+                        (:product_id, :id, :price, :items_in_stock);
+                        """, data)
         self.conn.commit()
-        self.conn.close()
+        id = data['id']
         print(f'Offer with id #{id} was created!')
 
     def read_all_offers(self):
@@ -84,24 +105,39 @@ class ProductRepository:
                         """)
         return jsonify(cursor.fetchall())
 
-    def read_offer(self, id):
+    def read_offer(self, product_id):
         cursor = self.conn.cursor()
         cursor.execute("""
                         SELECT *
                         FROM offers
-                        WHERE id=:id;
-                        """, {'id': id})
-        return jsonify(cursor.fetchall())
+                        WHERE product_id=:product_id;
+                        """, {'product_id': product_id})
+        data = cursor.fetchall()
+        result= []
+        for i in data:
+            dict_of_result = {'product_id':'',
+                'offer_id': '',
+                'price': '',
+                'items_in_stock': ''}
+            dict_of_result['product_id'] = i[0]
+            dict_of_result['offer_id'] = i[1]
+            dict_of_result['price'] = i[2]
+            dict_of_result['items_in_stock'] = i[3]
+            result.append(dict_of_result)
+        return jsonify(result)
 
-    def update_offer(self, dict_of_data):
+    def update_offer(self, product_id, dict_of_data):
+        data = {'product_id': product_id,
+                'id': dict_of_data['id'],
+                'price': dict_of_data['price'],
+                'items_in_stock': dict_of_data['items_in_stock']}
         self.conn.execute("""
                         UPDATE offers
                         SET price=:price, items_in_stock=:items_in_stock
-                        WHERE id=:id;
-                        """, dict_of_data)
+                        WHERE id=:id AND product_id=:product_id;
+                        """, data)
         self.conn.commit()
-        self.conn.close()
-        print(f'Offer with id #{id} was updated')
+        print(f'Offer with id #{id} was updated!')
     
     def delete_offer(self, id):
         self.conn.execute("""
@@ -109,8 +145,11 @@ class ProductRepository:
                         WHERE id=:id;
                         """, {'id': id})
         self.conn.commit()
+        print(f'Offer with id #{id} was deleted!')
+
+    def close_connection(self):
         self.conn.close()
-        print(f'Offer with id #{id} was deleted')
+        print('Connection was closed successful')
 
 
 class OffersServiceClient:
@@ -125,7 +164,7 @@ class OffersServiceClient:
         url = f'{config.url}{config.url_params["products"]}{config.url_params["register"]}'
         response = rq.post(url, headers=headers, json=data)
         if response.status_code == 201:
-            print(f'Item with id #{id} was registered successfully')
+            print(f'Product with id #{id} was registered!')
         return json.loads(response.text)
 
     def products_offer(self, id):
@@ -135,5 +174,5 @@ class OffersServiceClient:
         return json.loads(response.text)
 
 
-offers_service = OffersServiceClient()
-print(offers_service.product_register(1, '1234', 'qwerty'))
+#offers_service = OffersServiceClient()
+#print(offers_service.product_register(1, '1234', 'qwerty'))
