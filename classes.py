@@ -27,7 +27,7 @@ class ProductRepository:
                         FROM products
                         WHERE id=:id;
                         """, {'id':id})
-        return jsonify(cursor.fetchall())
+        return cursor.fetchall()
 
     def read_all_products(self):
         cursor = self.conn.cursor()
@@ -45,7 +45,7 @@ class ProductRepository:
             dict_of_result['name'] = i[1]
             dict_of_result['description'] = i[2]
             result.append(dict_of_result)
-        return jsonify(result)
+        return result
 
     def update_product(self, name, desc, id):
             self.conn.execute("""
@@ -72,7 +72,7 @@ class ProductRepository:
                         WHERE id=:id;
                         """, {'desc': desc, 'id': id})
         self.conn.commit()
-        print(f'Description of product with id #{id} was updated!') 
+        print(f'Description of product with id #{id} was updated!')
         
     def delete_product(self, id):
         self.conn.execute("""
@@ -103,7 +103,20 @@ class ProductRepository:
                         SELECT *
                         FROM offers;
                         """)
-        return jsonify(cursor.fetchall())
+        data = cursor.fetchall()
+        result = []
+        for i in data:
+            dict_of_result = {'product_id':'',
+            'offer_id': '',
+            'price': '',
+            'items_in_stock': ''}
+            dict_of_result['product_id'] = i[0]
+            dict_of_result['offer_id'] = i[1]
+            dict_of_result['price'] = i[2]
+            dict_of_result['items_in_stock'] = i[3]
+            result.append(dict_of_result)
+        return result
+        
 
     def read_offer(self, product_id):
         cursor = self.conn.cursor()
@@ -124,7 +137,7 @@ class ProductRepository:
             dict_of_result['price'] = i[2]
             dict_of_result['items_in_stock'] = i[3]
             result.append(dict_of_result)
-        return jsonify(result)
+        return result
 
     def update_offer(self, product_id, dict_of_data):
         data = {'product_id': product_id,
@@ -137,13 +150,14 @@ class ProductRepository:
                         WHERE id=:id AND product_id=:product_id;
                         """, data)
         self.conn.commit()
+        id = data['id']
         print(f'Offer with id #{id} was updated!')
     
-    def delete_offer(self, id):
+    def delete_offer(self, product_id):
         self.conn.execute("""
                         DELETE FROM offers
-                        WHERE id=:id;
-                        """, {'id': id})
+                        WHERE product_id=:product_id;
+                        """, {'product_id': product_id})
         self.conn.commit()
         print(f'Offer with id #{id} was deleted!')
 
