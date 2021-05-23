@@ -47,7 +47,7 @@ def get_products():
 
 @app.route('/products/<int:product_id>/', methods=['GET'])
 @auth.login_required
-def get_product(product_id):
+def get_product(product_id: int):
     repository = create_repository()
     try:
         response = repository.read_product(product_id)
@@ -58,6 +58,7 @@ def get_product(product_id):
         return jsonify('Error')
 
 @app.route('/products/', methods=['POST'])
+@auth.login_required
 def create_product():
     repository = create_repository()
     offers_service = OffersServiceClient()
@@ -72,9 +73,9 @@ def create_product():
             for i in offers:
                 repository.create_offer(id, i)
             repository.close_connection()
-            return jsonify({'product': f'id {id}'})
+            return jsonify({'product': f'id {id}'}), 201
         else:
-            return jsonify({'Error': 'Invalid request'}), 401
+            return jsonify({'Error': 'Invalid request'}), 400
     except sqlite3.IntegrityError:
         repository.close_connection()
         return jsonify('Product was registered before')
@@ -83,6 +84,7 @@ def create_product():
         return jsonify('Error')
 
 @app.route('/products/<int:product_id>/', methods=['PUT'])
+@auth.login_required
 def update_product(product_id):
     try:
         repository = create_repository()
@@ -107,6 +109,7 @@ def update_product(product_id):
         return jsonify('Error')
 
 @app.route('/products/<int:product_id>/', methods=['DELETE'])
+@auth.login_required
 def delete_product(product_id):
     repository = create_repository()
     try:
@@ -118,6 +121,7 @@ def delete_product(product_id):
         return jsonify('Error')
 
 @app.route('/offers/', methods=['GET'])
+@auth.login_required
 def get_offers():
     repository = create_repository()
     try:
@@ -129,6 +133,7 @@ def get_offers():
         return jsonify('Error')
 
 @app.route('/offers/<int:product_id>/', methods=['GET'])
+@auth.login_required
 def get_offer(product_id):
     repository = create_repository()
     try:
