@@ -1,10 +1,8 @@
 #external libraries
-from flask.json import jsonify
+from decouple import config
 import requests as rq
 #libraries
 import json
-#files
-import config
 
 class ProductRepository:
     def __init__(self, connection):
@@ -167,15 +165,20 @@ class ProductRepository:
 
 
 class OffersServiceClient:
-    def __init__(self):   
-        self.token = config.token
+    def __init__(self):
+        self.url = config('BASE_URL')
+        self.token = config('TOKEN')
+        self.url_params = {'auth': 'auth',
+                        'products': 'products',
+                        'register': 'register',
+                        'offers': 'offers'}
 
     def product_register(self, id, name, desc):
         headers = {'Bearer': self.token}
         data = {'id': f'{id}',
                 'name': f'{name}',
                 'description': f'{desc}'}
-        url = f'{config.url}{config.url_params["products"]}{config.url_params["register"]}'
+        url = f'{self.url}/{self.url_params["products"]}/{self.url_params["register"]}/'
         response = rq.post(url, headers=headers, json=data)
         if response.status_code == 201:
             print(f'Product with id #{id} was registered!')
@@ -183,10 +186,6 @@ class OffersServiceClient:
 
     def products_offer(self, id):
         headers = {'Bearer': self.token}
-        url = f'{config.url}{config.url_params["products"]}{id}/{config.url_params["offers"]}'
+        url = f'{self.url}/{self.url_params["products"]}/{id}/{self.url_params["offers"]}/'
         response = rq.get(url, headers=headers)
         return json.loads(response.text)
-
-
-#offers_service = OffersServiceClient()
-#print(offers_service.product_register(1, '1234', 'qwerty'))

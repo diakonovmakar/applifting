@@ -1,11 +1,5 @@
-import requests as rq
-
-import json
 import sqlite3
-
 from classes import OffersServiceClient, ProductRepository
-
-
 
 db_connect = sqlite3.connect('tables.sqlite')
 
