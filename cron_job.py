@@ -18,10 +18,11 @@ for id in products:
 for id in product_ids:
     product_id = id
     new_offers = offer_service.product_offers(product_id)
+    print(new_offers)
     for offer in new_offers:
         if offer['id'] in offer_ids:
             repository.update_offer(product_id, offer)
-        else:
+        elif offer['id'] not in offer_ids:
             repository.create_offer(product_id, offer)
 
 db_connect.close()
