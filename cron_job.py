@@ -18,7 +18,9 @@ for id in products:
 for id in product_ids:
     product_id = id
     new_offers = offer_service.product_offers(product_id)
-    print(new_offers)
+    for id in offer_ids:
+        if id not in new_offers:
+            repository.delete_offer_by_id(id)
     for offer in new_offers:
         if offer['id'] in offer_ids:
             repository.update_offer(product_id, offer)
