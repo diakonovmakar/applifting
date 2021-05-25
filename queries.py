@@ -1,4 +1,3 @@
-
 create_products_table = """
     CREATE TABLE IF NOT EXISTS products(
         id INTEGER PRIMARY KEY,
@@ -9,14 +8,24 @@ create_products_table = """
 
 create_offers_table = """
     CREATE TABLE IF NOT EXISTS offers(
-        offers_id INTEGER PRIMARY KEY,
-        id INTEGER,
+        product_id INTEGER,
+        id INTEGER PRIMARY KEY,
         price INTEGER,
         items_in_stock INTEGER,
-        FOREIGN KEY(id) REFERENCES products(id)
-    );
+        FOREIGN KEY(product_id) REFERENCES products(id)
+        );
     """
 
+create_offers_history_table = """
+    CREATE TABLE IF NOT EXISTS offers_history(
+        product_id INTEGER,
+        offer_id INTEGER,
+        price INTEGER,
+        FOREIGN KEY(product_id) REFERENCES products(id),
+        FOREIGN KEY(product_id) REFERENCES offers(product_id),
+        FOREIGN KEY(offer_id) REFERENCES offers(id)
+        );
+    """ 
 
 def create_products(name, description):
     create_product = f"""

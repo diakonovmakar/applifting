@@ -15,12 +15,14 @@ for id in offers:
 for id in products:
     product_ids.append(id[0])
 
-for id in product_ids:
-    product_id = id
+for product_id in product_ids:
     new_offers = offer_service.product_offers(product_id)
-    for id in offer_ids:
-        if id not in new_offers:
-            repository.delete_offer_by_id(id)
+    new_offer_ids = set()
+    for i in range(len(new_offers)):
+        new_offer_ids.add(new_offers[i]['id'])
+    for offer_id in offer_ids:
+        if offer_id not in new_offer_ids:
+            repository.delete_offer_by_id(offer_id)
     for offer in new_offers:
         if offer['id'] in offer_ids:
             repository.update_offer(product_id, offer)
